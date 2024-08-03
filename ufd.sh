@@ -2,7 +2,7 @@
 
 # ==============================================
 # Universal File Downloader for Android and Linux
-# Version: 2.0
+# Version: 2.1
 # Description: This script downloads user-specified files from a Python http.server
 # Author: [Infamousmick]
 # Date: [Aug-03-2024]
@@ -38,6 +38,26 @@ get_ip_android() {
         ip=$(getprop dhcp.wlan0.ipaddress)
     fi
     echo "$ip"
+}
+
+# Function to verify directory
+verify_directory() {
+    if command -v curl >/dev/null 2>&1; then
+        if curl -s -f "http://$SERVER:$PORT/$1" >/dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    elif command -v wget >/dev/null 2>&1; then
+        if wget -q --spider "http://$SERVER:$PORT/$1"; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        printf "\n${RED}Error: Neither curl nor wget is available.${NC}"
+        exit 1
+    fi
 }
 
 # Print header
@@ -77,14 +97,20 @@ if [ -z "$PORT" ]; then
     PORT="8000"
 fi
 
-# Ask the user for the file directory
-printf "\n${YELLOW}Enter the path of the directory containing the files \n(press Enter to use the current directory if you started \nhosting from the directory where the files are located):${NC} "
-read FILE_DIR
+# Ask the user for the file directory and verify it
+while true; do
+    printf "\n${YELLOW}Enter the path of the directory containing the files \n(press Enter to use the root directory):${NC} "
+    read FILE_DIR
 
-# If the user doesn't enter anything, use the current directory
-if [ -z "$FILE_DIR" ]; then
-    FILE_DIR=""
-fi
+    if [ -z "$FILE_DIR" ]; then
+        FILE_DIR=""
+        break
+    elif verify_directory "$FILE_DIR"; then
+        break
+    else
+        printf "\n${RED}Invalid directory. The specified path is not accessible.${NC}"
+    fi
+done
 
 # Function to download a file
 download_file() {
@@ -141,7 +167,7 @@ done
 if [ $download_count -eq $total_files ]; then
     printf "\n\n${GREEN}All downloads completed successfully.${NC}\n"
 else
-    printf "\n\n${YELLOW}Download process completed. Some files may not have been downloaded successfully.${NC}\n"
+    printf "\n\n${YELLOW}Download process completed.${NC}\n"
 fi
 
 printf "\n============================================\n"
