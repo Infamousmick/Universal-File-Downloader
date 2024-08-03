@@ -3,9 +3,9 @@
 # ==============================================
 # Universal File Server and Downloader for Android and Linux
 # Version: 3.0
-# Description: This script can start a Python http.server or download files from it
-# Author: [Your Name]
-# Date: [Current Date]
+# Description: This script can start a Python http.server on Linux or download files on both Android and Linux
+# Author: [Infamousmick]
+# Date: [Aug-03-2024]
 # ==============================================
 
 # ANSI color codes
@@ -197,30 +197,54 @@ read DEVICE_TYPE
 
 # Main menu
 while true; do
-    printf "\n${YELLOW}Choose an option:${NC}\n"
-    printf "1. Start Python HTTP server\n"
-    printf "2. Download files\n"
-    printf "3. Exit\n"
-    printf "${YELLOW}Enter your choice (1/2/3):${NC} "
-    read choice
+    if [ "$DEVICE_TYPE" = "a" ] || [ "$DEVICE_TYPE" = "A" ]; then
+        # Android menu
+        printf "\n${YELLOW}Choose an option:${NC}\n"
+        printf "1. Download files\n"
+        printf "2. Exit\n"
+        printf "${YELLOW}Enter your choice (1/2):${NC} "
+        read choice
 
-    case $choice in
-        1)
-            start_http_server
-            break
-            ;;
-        2)
-            download_files
-            break
-            ;;
-        3)
-            printf "\n${GREEN}Exiting. Goodbye!${NC}\n"
-            exit 0
-            ;;
-        *)
-            printf "\n${RED}Invalid choice. Please try again.${NC}\n"
-            ;;
-    esac
+        case $choice in
+            1)
+                download_files
+                break
+                ;;
+            2)
+                printf "\n${GREEN}Exiting. Goodbye!${NC}\n"
+                exit 0
+                ;;
+            *)
+                printf "\n${RED}Invalid choice. Please try again.${NC}\n"
+                ;;
+        esac
+    else
+        # Linux menu
+        printf "\n${YELLOW}Choose an option:${NC}\n"
+        printf "1. Start Python HTTP server\n"
+        printf "2. Download files\n"
+        printf "3. Exit\n"
+        printf "${YELLOW}Enter your choice (1/2/3):${NC} "
+        read choice
+
+        case $choice in
+            1)
+                start_http_server
+                break
+                ;;
+            2)
+                download_files
+                break
+                ;;
+            3)
+                printf "\n${GREEN}Exiting. Goodbye!${NC}\n"
+                exit 0
+                ;;
+            *)
+                printf "\n${RED}Invalid choice. Please try again.${NC}\n"
+                ;;
+        esac
+    fi
 done
 
 printf "\n============================================\n"
