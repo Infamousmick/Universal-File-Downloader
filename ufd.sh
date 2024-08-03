@@ -1,11 +1,11 @@
 #!/bin/sh
 
 # ==============================================
-# Universal File Downloader for Android and Linux
-# Version: 2.1
-# Description: This script downloads user-specified files from a Python http.server
-# Author: [Infamousmick]
-# Date: [Aug-03-2024]
+# Universal File Server and Downloader for Android and Linux
+# Version: 3.0
+# Description: This script can start a Python http.server or download files from it
+# Author: [Your Name]
+# Date: [Current Date]
 # ==============================================
 
 # ANSI color codes
@@ -40,6 +40,33 @@ get_ip_android() {
     echo "$ip"
 }
 
+# Function to start Python HTTP server
+start_http_server() {
+    printf "\n${YELLOW}Enter the port number for the HTTP server:${NC} "
+    read PORT
+    if [ -z "$PORT" ]; then
+        PORT="8000"
+    fi
+    
+    if [ "$DEVICE_TYPE" = "a" ] || [ "$DEVICE_TYPE" = "A" ]; then
+        IP=$(get_ip_android)
+    else
+        IP=$(get_ip_linux)
+    fi
+    
+    printf "\n${GREEN}Starting HTTP server on $IP:$PORT${NC}\n"
+    printf "${YELLOW}Press Ctrl+C to stop the server${NC}\n\n"
+    
+    if command -v python >/dev/null 2>&1; then
+        python -m http.server $PORT
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -m http.server $PORT
+    else
+        printf "${RED}Error: Neither python nor python3 is available.${NC}\n"
+        exit 1
+    fi
+}
+
 # Function to verify directory
 verify_directory() {
     if command -v curl >/dev/null 2>&1; then
@@ -60,57 +87,79 @@ verify_directory() {
     fi
 }
 
-# Print header
-printf "\n============================================="
-printf "\n   Universal File Downloader for Android/Linux"
-printf "\n=============================================\n"
+# Function to download files
+download_files() {
+    # Ask the user if this is the device that started the hosting
+    printf "\n${YELLOW}Is this the device that started hosting with http.server? (y/n)${NC}: "
+    read SAME_DEVICE
 
-# Ask the user if this is the device that started the hosting
-printf "\n${YELLOW}Is this the device that started hosting with http.server? (y/n)${NC}: "
-read SAME_DEVICE
-
-if [ "$SAME_DEVICE" = "y" ] || [ "$SAME_DEVICE" = "Y" ]; then
-    # Ask if it's Android or Linux
-    printf "\n${YELLOW}Is this device Android or Linux? (a/l)${NC}: "
-    read DEVICE_TYPE
-
-    if [ "$DEVICE_TYPE" = "a" ] || [ "$DEVICE_TYPE" = "A" ]; then
-        SERVER=$(get_ip_android)
-        if [ -z "$SERVER" ]; then
-            printf "\n${RED}Failed to automatically detect Android IP.${NC}"
-            printf "\n${YELLOW}Please enter the IP address manually:${NC} "
-            read SERVER
+    if [ "$SAME_DEVICE" = "y" ] || [ "$SAME_DEVICE" = "Y" ]; then
+        if [ "$DEVICE_TYPE" = "a" ] || [ "$DEVICE_TYPE" = "A" ]; then
+            SERVER=$(get_ip_android)
+        else
+            SERVER=$(get_ip_linux)
         fi
     else
-        SERVER=$(get_ip_linux)
+        # Ask for the IP of the device that started hosting
+        printf "\n${YELLOW}Enter the IP of the device that started hosting:${NC} "
+        read SERVER
     fi
-else
-    # Ask for the IP of the device that started hosting
-    printf "\n${YELLOW}Enter the IP of the device that started hosting:${NC} "
-    read SERVER
-fi
 
-# Ask for the port number
-printf "\n${YELLOW}Enter the port number (default is 8000):${NC} "
-read PORT
-if [ -z "$PORT" ]; then
-    PORT="8000"
-fi
+    # Ask for the port number
+    printf "\n${YELLOW}Enter the port number (default is 8000):${NC} "
+    read PORT
+    if [ -z "$PORT" ]; then
+        PORT="8000"
+    fi
 
-# Ask the user for the file directory and verify it
-while true; do
-    printf "\n${YELLOW}Enter the path of the directory containing the files \n(press Enter to use the root directory):${NC} "
-    read FILE_DIR
+    # Ask the user for the file directory and verify it
+    while true; do
+        printf "\n${YELLOW}Enter the path of the directory containing the files \n(press Enter to use the root directory):${NC} "
+        read FILE_DIR
 
-    if [ -z "$FILE_DIR" ]; then
-        FILE_DIR=""
-        break
-    elif verify_directory "$FILE_DIR"; then
-        break
+        if [ -z "$FILE_DIR" ]; then
+            FILE_DIR=""
+            break
+        elif verify_directory "$FILE_DIR"; then
+            break
+        else
+            printf "\n${RED}Invalid directory. The specified path is not accessible.${NC}"
+        fi
+    done
+
+    # Print the IP address and directory
+    printf "\n${BLUE}Using IP address: $SERVER${NC}"
+    printf "\n${BLUE}Using port: $PORT${NC}"
+    printf "\n${BLUE}Using directory: $FILE_DIR${NC}"
+
+    # Download files
+    printf "\n\n${YELLOW}Starting downloads...${NC}"
+    download_count=0
+    total_files=0
+
+    while true; do
+        printf "\n${YELLOW}Enter the name of the file to download (or press Enter to finish):${NC} "
+        read filename
+        if [ -z "$filename" ]; then
+            break
+        fi
+        total_files=$((total_files + 1))
+        download_file "$filename" && download_count=$((download_count + 1))
+        
+        printf "\n${YELLOW}Do you want to download another file? (y/n):${NC} "
+        read another_file
+        if [ "$another_file" != "y" ] && [ "$another_file" != "Y" ]; then
+            break
+        fi
+    done
+
+    # Check if all files were downloaded successfully
+    if [ $download_count -eq $total_files ]; then
+        printf "\n\n${GREEN}All downloads completed successfully.${NC}\n"
     else
-        printf "\n${RED}Invalid directory. The specified path is not accessible.${NC}"
+        printf "\n\n${YELLOW}Download process completed. Some files may not have been downloaded successfully.${NC}\n"
     fi
-done
+}
 
 # Function to download a file
 download_file() {
@@ -137,37 +186,41 @@ download_file() {
     fi
 }
 
-# Print the IP address and directory
-printf "\n${BLUE}Using IP address: $SERVER${NC}"
-printf "\n${BLUE}Using port: $PORT${NC}"
-printf "\n${BLUE}Using directory: $FILE_DIR${NC}"
+# Print header
+printf "\n============================================="
+printf "\n   Universal File Server and Downloader for Android/Linux"
+printf "\n=============================================\n"
 
-# Download files
-printf "\n\n${YELLOW}Starting downloads...${NC}"
-download_count=0
-total_files=0
+# Ask if it's Android or Linux
+printf "\n${YELLOW}Is this device Android or Linux? (a/l)${NC}: "
+read DEVICE_TYPE
 
+# Main menu
 while true; do
-    printf "\n${YELLOW}Enter the name of the file to download (or press Enter to finish):${NC} "
-    read filename
-    if [ -z "$filename" ]; then
-        break
-    fi
-    total_files=$((total_files + 1))
-    download_file "$filename" && download_count=$((download_count + 1))
-    
-    printf "\n${YELLOW}Do you want to download another file? (y/n):${NC} "
-    read another_file
-    if [ "$another_file" != "y" ] && [ "$another_file" != "Y" ]; then
-        break
-    fi
-done
+    printf "\n${YELLOW}Choose an option:${NC}\n"
+    printf "1. Start Python HTTP server\n"
+    printf "2. Download files\n"
+    printf "3. Exit\n"
+    printf "${YELLOW}Enter your choice (1/2/3):${NC} "
+    read choice
 
-# Check if all files were downloaded successfully
-if [ $download_count -eq $total_files ]; then
-    printf "\n\n${GREEN}All downloads completed successfully.${NC}\n"
-else
-    printf "\n\n${YELLOW}Download process completed.${NC}\n"
-fi
+    case $choice in
+        1)
+            start_http_server
+            break
+            ;;
+        2)
+            download_files
+            break
+            ;;
+        3)
+            printf "\n${GREEN}Exiting. Goodbye!${NC}\n"
+            exit 0
+            ;;
+        *)
+            printf "\n${RED}Invalid choice. Please try again.${NC}\n"
+            ;;
+    esac
+done
 
 printf "\n============================================\n"
