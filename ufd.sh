@@ -221,7 +221,7 @@ while true; do
     else
         # Linux menu
         printf "\n${YELLOW}Choose an option:${NC}\n"
-        printf "1. Start Python HTTP server\n"
+        printf "1. Start Python HTTP server (requires sudo)\n"
         printf "2. Download files\n"
         printf "3. Exit\n"
         printf "${YELLOW}Enter your choice (1/2/3):${NC} "
