@@ -2,10 +2,10 @@
 
 # ==============================================
 # Universal File Server and Downloader for Android and Linux
-# Version: 3.0
+# Version: 3.2
 # Description: This script can start a Python http.server on Linux or download files on both Android and Linux
-# Author: [Infamousmick]
-# Date: [Aug-03-2024]
+# Author: InfamousMick
+# Date: AUG-03-2024
 # ==============================================
 
 # ANSI color codes
@@ -42,28 +42,29 @@ get_ip_android() {
 
 # Function to start Python HTTP server
 start_http_server() {
-    printf "\n${YELLOW}Enter the port number for the HTTP server:${NC} "
-    read PORT
-    if [ -z "$PORT" ]; then
-        PORT="8000"
-    fi
-    
-    if [ "$DEVICE_TYPE" = "a" ] || [ "$DEVICE_TYPE" = "A" ]; then
-        IP=$(get_ip_android)
-    else
+    if [ "$DEVICE_TYPE" != "a" ] && [ "$DEVICE_TYPE" != "A" ]; then
+        printf "\n${YELLOW}Enter the port number for the HTTP server:${NC} "
+        read PORT
+        if [ -z "$PORT" ]; then
+            PORT="8000"
+        fi
+        
         IP=$(get_ip_linux)
-    fi
-    
-    printf "\n${GREEN}Starting HTTP server on $IP:$PORT${NC}\n"
-    printf "${YELLOW}Press Ctrl+C to stop the server${NC}\n\n"
-    
-    if command -v python >/dev/null 2>&1; then
-        python -m http.server $PORT
-    elif command -v python3 >/dev/null 2>&1; then
-        python3 -m http.server $PORT
+        
+        printf "\n${GREEN}Starting HTTP server on $IP:$PORT${NC}\n"
+        printf "${YELLOW}This operation requires root privileges. Please enter your sudo password when prompted.${NC}\n"
+        printf "${YELLOW}Press Ctrl+C to stop the server${NC}\n\n"
+        
+        if command -v python3 >/dev/null 2>&1; then
+            sudo python3 -m http.server $PORT
+        elif command -v python >/dev/null 2>&1; then
+            sudo python -m http.server $PORT
+        else
+            printf "${RED}Error: Neither python nor python3 is available.${NC}\n"
+            exit 1
+        fi
     else
-        printf "${RED}Error: Neither python nor python3 is available.${NC}\n"
-        exit 1
+        printf "${RED}Error: HTTP server cannot be started on Android devices.${NC}\n"
     fi
 }
 
