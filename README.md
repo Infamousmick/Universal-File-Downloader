@@ -5,7 +5,7 @@
 ### Installation
 1. Copy in the terminal
 ```
-wget https://github.com/Infamousmick/Universal-File-Downloader/blob/main/ufd.sh
+wget https://raw.githubusercontent.com/Infamousmick/Universal-File-Downloader/main/ufd.sh
 ```
 
 ### Usage 
